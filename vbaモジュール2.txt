@@ -1,0 +1,162 @@
+Option Explicit
+'各タブの最終行
+Dim エラー最終行, exp最終行, 最賃最終行
+'mainタブ
+Dim f, 求人案件ID
+'住所取得
+Dim h, expID, 雇用ID, エラーメッセージ
+'最賃取得
+Dim 住所, 都道府県
+
+Sub main()
+    
+    '最終行を取得
+    エラー最終行 = Sheets("エラー").Cells(Rows.Count, "A").End(xlUp).Row
+    exp最終行 = Sheets("exp").Cells(Rows.Count, "A").End(xlUp).Row
+    最賃最終行 = Sheets("最賃").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    'エラーコメントを上から取得して、一致したら処理を実行する
+    For f = 3 To エラー最終行
+    
+        求人案件ID = Sheets("エラー").Cells(f, 4)
+        
+        '求人案件IDが空白ならスキップ
+        'If 求人案件ID = "" Then
+        '    GoTo NextIteration
+        'End If
+        
+        If InStr(Sheets("エラー").Cells(f, 252), "紹介先企業の住所と郵便番号が一致しません") > 0 Then
+            
+            Call 紹介先住所取得
+        
+        ElseIf InStr(Sheets("エラー").Cells(f, 252), "住所と郵便番号が一致しません") > 0 Then
+            
+            Call 勤務地住所取得
+        
+        ElseIf InStr(Sheets("エラー").Cells(f, 252), "(郵便番号)は存在しません") > 0 Then
+            
+            Call 勤務地住所取得
+        
+        ElseIf InStr(Sheets("エラー").Cells(f, 252), "(給与金額（最低）)は最低賃金未満") > 0 Then
+            
+            Call 最低賃金取得
+        
+        End If
+        
+NextIteration:
+    Next
+    
+    
+    MsgBox "完了しました。"
+End Sub
+
+Sub 紹介先住所取得()
+    
+    For h = 2 To exp最終行
+    
+        expID = Sheets("exp").Cells(h, 4)
+        If expID = 求人案件ID Then
+            With Sheets("エラー")
+                .Cells(f, 247) = ""
+                .Cells(f, 248) = ""
+                .Cells(f, 249) = ""
+                
+                .Cells(f, 247) = Sheets("exp").Cells(h, 247)
+                .Cells(f, 248) = Sheets("exp").Cells(h, 248)
+                .Cells(f, 249) = Sheets("exp").Cells(h, 249)
+            Exit For
+            End With
+        End If
+    
+    Next
+
+End Sub
+
+Sub 勤務地住所取得()
+
+
+    If 求人案件ID = "" Then
+        '都道府県と市区町村を結合
+        住所 = Sheets("エラー").Cells(f, 12) & Sheets("エラー").Cells(f, 13)
+        エラーメッセージ = Sheets("エラー").Cells(f, 252)
+        
+        'エラーメッセージの中に結合した住所が含まれていたらそのまま入力
+        '含まれていない場合はセルの色を変更
+        If InStr(エラーメッセージ, 住所) > 0 Then
+            Sheets("エラー").Cells(f, 12) = 住所
+            Sheets("エラー").Cells(f, 13) = ""
+        Else
+            Sheets("エラー").Cells(f, 12).Interior.Color = RGB(255, 0, 0)
+            Sheets("エラー").Cells(f, 13).Interior.Color = RGB(255, 0, 0)
+        End If
+        
+        GoTo NextIteration
+    
+    End If
+
+
+    For h = 2 To exp最終行
+        
+        expID = Sheets("exp").Cells(h, 4)
+        If expID = 求人案件ID Then
+            
+            With Sheets("エラー")
+                .Cells(f, 11) = ""
+                .Cells(f, 12) = ""
+                .Cells(f, 13) = ""
+                .Cells(f, 11) = Sheets("exp").Cells(h, 11)
+                .Cells(f, 12) = Sheets("exp").Cells(h, 12)
+                .Cells(f, 13) = Sheets("exp").Cells(h, 13)
+            End With
+            
+            雇用ID = Sheets("exp").Cells(h, 24)
+            If 雇用ID = 8 Then
+            
+                With Sheets("エラー")
+                    .Cells(f, 247) = ""
+                    .Cells(f, 248) = ""
+                    .Cells(f, 249) = ""
+                    .Cells(f, 247) = Sheets("exp").Cells(h, 11)
+                    .Cells(f, 248) = Sheets("exp").Cells(h, 12)
+                    .Cells(f, 249) = Sheets("exp").Cells(h, 13)
+                End With
+                Exit For
+            
+            Else
+                
+                Exit For
+            
+            End If
+            
+        End If
+    
+    Next
+    
+NextIteration:
+
+End Sub
+
+Sub 最低賃金取得()
+
+    住所 = Sheets("エラー").Cells(f, 12)
+
+    For h = 2 To 最賃最終行
+        
+        都道府県 = Sheets("最賃").Cells(h, 1)
+        If InStr(住所, 都道府県) > 0 Then
+            With Sheets("エラー")
+                .Cells(f, 52) = ""
+                .Cells(f, 53) = ""
+            
+                .Cells(f, 52) = Sheets("最賃").Cells(h, 2)
+                .Cells(f, 53) = Sheets("最賃").Cells(h, 2)
+                Exit For
+            End With
+        
+        End If
+    
+    Next
+
+
+
+End Sub

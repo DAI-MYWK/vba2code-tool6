@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel解析レポート: ジョブオプ エラー解消（ホットスタッフ）ver1.03</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+    background: #ffffff; color: #1a1a2e; line-height: 1.75; padding: 0;
+  }
+  .page-header {
+    background: linear-gradient(135deg, #0a1628 0%, #1a3a6e 100%);
+    color: #ffffff; padding: 56px 48px 48px;
+  }
+  .page-header h1 { font-size: 28px; font-weight: 700; letter-spacing: 0.02em; margin-bottom: 8px; }
+  .page-header .subtitle { font-size: 14px; color: #94b8e8; font-weight: 400; }
+  .meta-row { display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+  .meta-item {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 12px 20px; min-width: 180px;
+  }
+  .meta-item .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #7faad4; margin-bottom: 4px; }
+  .meta-item .value { font-size: 16px; font-weight: 600; color: #ffffff; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 48px 32px 80px; }
+  .toc { background: #f4f7fb; border: 1px solid #d4e0f0; border-radius: 10px; padding: 28px 32px; margin-bottom: 48px; }
+  .toc h2 { font-size: 16px; color: #1a3a6e; margin-bottom: 16px; font-weight: 700; }
+  .toc ol { list-style: none; counter-reset: toc-counter; padding: 0; columns: 2; column-gap: 32px; }
+  .toc li { counter-increment: toc-counter; margin-bottom: 6px; break-inside: avoid; }
+  .toc li a { color: #2a5ea8; text-decoration: none; font-size: 14px; display: flex; align-items: baseline; gap: 8px; }
+  .toc li a:hover { color: #0d3b7a; text-decoration: underline; }
+  .toc li a::before { content: counter(toc-counter, decimal-leading-zero); font-weight: 700; font-size: 12px; color: #5a8dc8; min-width: 22px; }
+  .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+  .section-header { border-left: 4px solid #2a5ea8; padding-left: 16px; margin-bottom: 24px; }
+  .section-header h2 { font-size: 22px; font-weight: 700; color: #0d2b5e; }
+  .section-header p { font-size: 13px; color: #5a7ba5; margin-top: 4px; }
+  h3 { font-size: 17px; font-weight: 700; color: #1a3a6e; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #e4ecf6; }
+  h4 { font-size: 15px; font-weight: 700; color: #2a5ea8; margin: 20px 0 8px; }
+  p, li { font-size: 14.5px; }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  strong { color: #0d2b5e; }
+  .table-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: 8px; border: 1px solid #d4e0f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; white-space: nowrap; }
+  thead th { background: #1a3a6e; color: #ffffff; font-weight: 600; text-align: left; padding: 10px 14px; font-size: 12.5px; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #e8eef6; vertical-align: top; }
+  tbody tr:hover { background: #f0f5fc; }
+  tbody tr:nth-child(even) { background: #f8fafd; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.code { font-family: "Consolas", "SFMono-Regular", monospace; font-size: 12.5px; color: #2a5ea8; }
+  .card { background: #f8fafd; border: 1px solid #d4e0f0; border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+  .card.highlight { border-left: 4px solid #2a5ea8; background: #edf3fc; }
+  .card .card-title { font-size: 14px; font-weight: 700; color: #1a3a6e; margin-bottom: 8px; }
+  .code-block {
+    background: #0f1b2d; color: #c8daf0; padding: 20px 24px; border-radius: 8px;
+    font-family: "Consolas", "SFMono-Regular", monospace; font-size: 13px; line-height: 1.6;
+    overflow-x: auto; margin: 12px 0 20px; white-space: pre;
+  }
+  .code-block .kw { color: #6eb5ff; }
+  .code-block .fn { color: #7ee8a8; }
+  .code-block .str { color: #ffd580; }
+  .code-block .cmt { color: #5a7ba5; }
+  .flow { background: #f4f7fb; border: 1px solid #d4e0f0; border-radius: 10px; padding: 28px 32px; margin: 16px 0 24px; }
+  .flow-step { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 4px; }
+  .flow-num {
+    min-width: 32px; height: 32px; background: #2a5ea8; color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+  .flow-content { flex: 1; padding-bottom: 16px; border-left: 2px solid #d4e0f0; padding-left: 16px; margin-left: -25px; padding-top: 4px; }
+  .flow-step:last-child .flow-content { border-left: 2px solid transparent; }
+  .flow-content .step-title { font-weight: 700; color: #0d2b5e; font-size: 14px; }
+  .flow-content .step-desc { font-size: 13px; color: #3d5a80; margin-top: 2px; }
+  .badge { display: inline-block; background: #2a5ea8; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-right: 6px; }
+  .badge.green { background: #1a7a4c; }
+  .badge.orange { background: #b87333; }
+  .badge.gray { background: #6b7b8d; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .tag { background: #e4ecf6; color: #1a3a6e; font-size: 12px; padding: 3px 10px; border-radius: 4px; font-weight: 500; }
+  hr { border: none; border-top: 1px solid #d4e0f0; margin: 40px 0; }
+  .page-footer { text-align: center; padding: 32px; color: #8a9ab5; font-size: 12px; border-top: 1px solid #e4ecf6; }
+  @media (max-width: 768px) {
+    .page-header { padding: 32px 20px; }
+    .page-header h1 { font-size: 22px; }
+    .container { padding: 24px 16px 48px; }
+    .toc ol { columns: 1; }
+    table { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<div class="page-header">
+  <h1>Excel解析レポート</h1>
+  <div class="subtitle">社内ツール6_ジョブオプエラー処理_ホットスタッフ_ver1.03.xlsm</div>
+  <div class="meta-row">
+    <div class="meta-item">
+      <div class="label">FILE SIZE</div>
+      <div class="value">25.6 MB</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">SHEETS</div>
+      <div class="value">4</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">VBA MACROS</div>
+      <div class="value">2 Modules</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">VERSION</div>
+      <div class="value">rev 1.03 (2025-10-01)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CONTAINER ========== -->
+<div class="container">
+
+<!-- ========== TOC ========== -->
+<div class="toc">
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#sec1">概要</a></li>
+    <li><a href="#sec2">シート構成一覧</a></li>
+    <li><a href="#sec3">操作画面シート「main」の詳細</a></li>
+    <li><a href="#sec4">エラーデータシートの詳細</a></li>
+    <li><a href="#sec5">求人一覧シート「exp」の詳細</a></li>
+    <li><a href="#sec6">最低賃金マスタシート「最賃」の詳細</a></li>
+    <li><a href="#sec7">VBAマクロ構成</a></li>
+    <li><a href="#sec8">処理フロー詳細</a></li>
+    <li><a href="#sec9">主要関数一覧</a></li>
+    <li><a href="#sec10">補足情報</a></li>
+  </ol>
+</div>
+
+<!-- ========== SECTION 1: 概要 ========== -->
+<div class="section" id="sec1">
+  <div class="section-header">
+    <h2>概要</h2>
+    <p>ツールの目的と基本情報</p>
+  </div>
+
+  <div class="card highlight">
+    <div class="card-title">ツール名称</div>
+    <p>ジョブオプ エラー解消（ホットスタッフ）</p>
+  </div>
+
+  <p>本ツールは、<strong>株式会社ホットスタッフ</strong>がジョブオプ（求人情報管理プラットフォーム）に求人情報を登録・更新する際に発生する<strong>エラーを自動修正する</strong>ための社内VBAツールです。</p>
+
+  <p>ジョブオプから出力されたエラーファイル（住所・郵便番号の不一致、文字数超過などのバリデーションエラー）と、求人一覧データ（expシート）を読み込み、エラー内容に応じた修正を自動的に行います。修正済みデータは再インポート可能な形式で出力されます。</p>
+
+  <h3>バージョン履歴</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>バージョン</th><th>更新日</th><th>備考</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>rev 1.00</td><td>2025-06-13</td><td>-</td></tr>
+        <tr><td>rev 1.01</td><td>2025-07-22</td><td>有職の紹介先住所への変更を追加</td></tr>
+        <tr><td>rev 1.02</td><td>2025-09-25</td><td>カラム変更に伴う変更</td></tr>
+        <tr><td>rev 1.03</td><td>2025-10-01</td><td>最賃更新, 新規案件対応</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== SECTION 2: シート構成一覧 ========== -->
+<div class="section" id="sec2">
+  <div class="section-header">
+    <h2>シート構成一覧</h2>
+    <p>全4シートの役割と構成</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>シート名</th><th>役割</th><th>行数</th><th>列数</th><th>数式</th><th>保護</th><th>説明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>main</strong></td>
+          <td><span class="badge">操作画面</span></td>
+          <td class="num">18</td>
+          <td class="num">66</td>
+          <td>なし</td>
+          <td>なし</td>
+          <td>ユーザー操作用のメイン画面。ボタン配置・使い方・バージョン情報を表示</td>
+        </tr>
+        <tr>
+          <td><strong>エラー</strong></td>
+          <td><span class="badge orange">入出力</span></td>
+          <td class="num">166</td>
+          <td class="num">252</td>
+          <td>なし</td>
+          <td>なし</td>
+          <td>ジョブオプから出力されたエラーデータを格納。VBAが修正を書き込む対象</td>
+        </tr>
+        <tr>
+          <td><strong>exp</strong></td>
+          <td><span class="badge green">入力データ</span></td>
+          <td class="num">16,625</td>
+          <td class="num">251</td>
+          <td>なし</td>
+          <td>なし</td>
+          <td>ジョブオプの求人一覧データ（マスタ参照用）。全案件の詳細情報を保持</td>
+        </tr>
+        <tr>
+          <td><strong>最賃</strong></td>
+          <td><span class="badge gray">マスタ</span></td>
+          <td class="num">49</td>
+          <td class="num">3</td>
+          <td>なし</td>
+          <td>なし</td>
+          <td>都道府県別の最低賃金マスタ（47都道府県分）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== SECTION 3: mainシート ========== -->
+<div class="section" id="sec3">
+  <div class="section-header">
+    <h2>操作画面シート「main」の詳細</h2>
+    <p>ユーザーインターフェース画面の全セル内容</p>
+  </div>
+
+  <p>mainシートはツールの操作画面として機能し、以下の要素が配置されています。</p>
+
+  <h3>タイトルエリア</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>セル</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td class="code">B2</td><td>ジョブオプ エラー解消（ホットスタッフ）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>操作手順エリア</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>セル</th><th>ステップ</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td class="code">J4</td><td>-</td><td>使い方</td></tr>
+        <tr><td class="code">J5-K5</td><td>1</td><td>[expインポート]でジョブオプの求人一覧をインポート</td></tr>
+        <tr><td class="code">J6-K6</td><td>2</td><td>[エラーインポート]でエラーファイルをインポート</td></tr>
+        <tr><td class="code">J7-K7</td><td>3</td><td>[開始]を押して修正</td></tr>
+        <tr><td class="code">J8-K8</td><td>4</td><td>[出力]でデータを出力</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>保存先設定</h3>
+  <div class="card">
+    <div class="card-title">出力先パス (K13)</div>
+    <p class="code-block">G:\共有ドライブ\00_全社共通\13_個人・部門別\02_内勤チーム\9.原稿更新ツール関連★\毎日_ホットスタッフ_ジョブオプ\error\</p>
+  </div>
+
+  <h3>バージョン管理エリア (W列-Z列)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>バージョン</th><th>更新日</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>rev 1.00</td><td>2025-06-13</td><td>-</td></tr>
+        <tr><td>rev 1.01</td><td>2025-07-22</td><td>有職の紹介先住所への変更を追加</td></tr>
+        <tr><td>rev 1.02</td><td>2025-09-25</td><td>カラム変更に伴う変更</td></tr>
+        <tr><td>rev 1.03</td><td>2025-10-01</td><td>最賃更新, 新規案件対応</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>mainシートにはVBAマクロに紐づく<strong>4つのボタン</strong>が配置されていると推定されます: [expインポート]、[エラーインポート]、[開始]、[出力]。</p>
+</div>
+
+<!-- ========== SECTION 4: エラーシート ========== -->
+<div class="section" id="sec4">
+  <div class="section-header">
+    <h2>エラーデータシートの詳細</h2>
+    <p>ジョブオプのエラー出力データ（252列構成）</p>
+  </div>
+
+  <p>エラーシートは、ジョブオプから出力されたエラーファイルの内容を格納するシートです。1行目に会社名「株式会社ホットスタッフ」、2行目にヘッダー行、3行目以降にデータが入ります。サンプルデータとして166行（ヘッダー含む）が格納されています。</p>
+
+  <h3>ヘッダー構成（252列 / A2～IR2）</h3>
+  <p>主要カラムを機能別に分類すると、以下の通りです。</p>
+
+  <h4>基本情報カラム（A～I列）</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>列</th><th>カラム名</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td class="code">A</td><td>操作コード</td><td>01=新規, 02=更新 などのオペレーション種別</td></tr>
+        <tr><td class="code">B</td><td>採用ホームページID</td><td>ホットスタッフの採用HP識別子（例: 8004051001）</td></tr>
+        <tr><td class="code">C</td><td>採用ホームページ名</td><td>採用サイト名称</td></tr>
+        <tr><td class="code">D</td><td>求人案件ID</td><td>個別求人の識別番号</td></tr>
+        <tr><td class="code">E</td><td>店舗ID</td><td>拠点の識別番号</td></tr>
+        <tr><td class="code">F</td><td>店舗名</td><td>拠点名称</td></tr>
+        <tr><td class="code">G</td><td>勤務地コード</td><td>勤務地の種別コード</td></tr>
+        <tr><td class="code">H</td><td>勤務地</td><td>勤務地の詳細</td></tr>
+        <tr><td class="code">I</td><td>勤務地名称</td><td>勤務地の名前（例: 株式会社ホットスタッフ奈良南）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>住所関連カラム（K～N列）</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>列</th><th>カラム名</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td class="code">K</td><td>郵便番号</td><td>7桁の郵便番号（ハイフンなし）</td></tr>
+        <tr><td class="code">L</td><td>都道府県市区町村</td><td>住所の市区町村まで</td></tr>
+        <tr><td class="code">M</td><td>番地</td><td>番地以降</td></tr>
+        <tr><td class="code">N</td><td>建物名</td><td>建物名称</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>給与関連カラム（AT～BU列）</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>列</th><th>カラム名</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td class="code">AT</td><td>給与形態コード</td><td>1=時給 等</td></tr>
+        <tr><td class="code">AX</td><td>金額入力方式コード</td><td>03=範囲指定 等</td></tr>
+        <tr><td class="code">AZ</td><td>給与金額（最低）</td><td>最低時給（例: 1200）</td></tr>
+        <tr><td class="code">BA</td><td>給与金額（最高）</td><td>最高時給（例: 1500）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>紹介先企業情報（IJ～IQ列）</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>列</th><th>カラム名</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td class="code">IJ</td><td>紹介先雇用形態コード</td><td>紹介先の雇用形態</td></tr>
+        <tr><td class="code">IL</td><td>紹介先企業情報_名称</td><td>派遣先企業名</td></tr>
+        <tr><td class="code">IM</td><td>紹介先企業情報_郵便番号</td><td>紹介先の郵便番号</td></tr>
+        <tr><td class="code">IN</td><td>紹介先企業情報_都道府県市区町村</td><td>紹介先の住所</td></tr>
+        <tr><td class="code">IQ</td><td>管理用 求人案件ID</td><td>内部管理用ID</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>エラー情報カラム（IR列）</h4>
+  <div class="card highlight">
+    <div class="card-title">IR列: 求人案件の操作（エラーメッセージ格納列）</div>
+    <p>各行の末尾IR列に、ジョブオプが検出したバリデーションエラーのメッセージが格納されています。</p>
+    <p>確認されたエラーパターン:</p>
+    <ul>
+      <li><strong>住所と郵便番号が一致しません</strong> &mdash; 住所は次の内容から選んでくださいという候補リスト付き</li>
+      <li><strong>(待遇・福利厚生補足コメント)は500文字以内で入力してください</strong> &mdash; 文字数超過エラー</li>
+      <li><strong>(給与金額（最低）)は最低賃金未満</strong> &mdash; 最低賃金チェックエラー</li>
+      <li><strong>(郵便番号)は存在しません</strong> &mdash; 郵便番号の存在チェックエラー</li>
+    </ul>
+  </div>
+
+  <h3>サンプルデータ例</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>行</th><th>操作</th><th>拠点名</th><th>郵便番号</th><th>住所</th><th>最低時給</th><th>エラー内容</th></tr></thead>
+      <tbody>
+        <tr><td class="num">3</td><td>01(新規)</td><td>ホットスタッフ奈良南</td><td>6392122</td><td>奈良県葛城市薑</td><td>1,200</td><td>住所と郵便番号が一致しません</td></tr>
+        <tr><td class="num">4</td><td>02(更新)</td><td>ホットスタッフ熊谷</td><td>3600217</td><td>埼玉県熊谷市上根</td><td>1,400</td><td>住所と郵便番号が一致しません</td></tr>
+        <tr><td class="num">7</td><td>01(新規)</td><td>ホットスタッフ成田</td><td>2891608</td><td>千葉県山武郡芝山町</td><td>1,140</td><td>(待遇・福利厚生補足コメント)は500文字以内</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== SECTION 5: expシート ========== -->
+<div class="section" id="sec5">
+  <div class="section-header">
+    <h2>求人一覧シート「exp」の詳細</h2>
+    <p>ジョブオプの全求人データ（16,625行 x 251列）</p>
+  </div>
+
+  <p>expシートは、ジョブオプからエクスポートされた求人一覧データをそのまま格納するシートです。VBAの修正処理においてマスタデータ（参照元）として利用されます。</p>
+
+  <div class="card">
+    <div class="card-title">シート概要</div>
+    <p>行数: <strong>16,625行</strong>（2行目がヘッダー、3行目以降がデータ、1行目に「株式会社ホットスタッフ」）</p>
+    <p>列数: <strong>251列</strong>（A～IQ列、エラーシートと同一カラム構成だがIR列のエラーメッセージを除く）</p>
+    <p>ファイルサイズ: 約25MB（ツール全体のファイルサイズの大半を占める）</p>
+  </div>
+
+  <p>ヘッダー構成はエラーシートとほぼ同一です（A2～IQ2列）。このシートは、エラー修正時に「正しい求人データ」として参照され、エラーシート上のデータと照合・上書きに使用されます。</p>
+
+  <h3>主要参照カラム（VBA処理で使用される列）</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>列</th><th>カラム名</th><th>VBA処理での用途</th></tr></thead>
+      <tbody>
+        <tr><td class="code">D</td><td>求人案件ID</td><td>エラーシートとのマッチングキー</td></tr>
+        <tr><td class="code">K</td><td>郵便番号</td><td>住所エラー修正時の正しい郵便番号参照元</td></tr>
+        <tr><td class="code">L</td><td>都道府県市区町村</td><td>住所エラー修正時の正しい住所参照元</td></tr>
+        <tr><td class="code">AZ</td><td>給与金額（最低）</td><td>最低賃金チェック時の参照元</td></tr>
+        <tr><td class="code">EE</td><td>待遇・福利厚生補足コメント</td><td>文字数超過修正時の参照元</td></tr>
+        <tr><td class="code">IM</td><td>紹介先企業情報_郵便番号</td><td>紹介先住所エラー修正時の参照元</td></tr>
+        <tr><td class="code">IN</td><td>紹介先企業情報_都道府県市区町村</td><td>紹介先住所エラー修正時の参照元</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== SECTION 6: 最賃シート ========== -->
+<div class="section" id="sec6">
+  <div class="section-header">
+    <h2>最低賃金マスタシート「最賃」の詳細</h2>
+    <p>47都道府県の最低賃金一覧</p>
+  </div>
+
+  <p>「最賃」シートは、エラーシート内の「給与金額（最低）は最低賃金未満」エラーを修正する際の参照マスタとして使用されます。47都道府県の最低賃金額と発効年月日を保持しています。</p>
+
+  <h3>カラム構成</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>列</th><th>カラム名</th><th>データ型</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td class="code">A</td><td>都道府県名</td><td>文字列</td><td>47都道府県の名称</td></tr>
+        <tr><td class="code">B</td><td>最低賃金時間額【円】</td><td>数値</td><td>各都道府県の最低賃金（時給換算）</td></tr>
+        <tr><td class="code">C</td><td>発効年月日</td><td>日付</td><td>当該最低賃金の適用開始日</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>サンプルデータ（一部抜粋）</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>都道府県</th><th>最低賃金（円）</th><th>発効年月日</th></tr></thead>
+      <tbody>
+        <tr><td>北海道</td><td class="num">1,075</td><td>2025/10/04</td></tr>
+        <tr><td>東京都</td><td class="num">1,226</td><td>2025/10/03</td></tr>
+        <tr><td>大阪府</td><td class="num">1,177</td><td>2025/10/16</td></tr>
+        <tr><td>愛知県</td><td class="num">1,140</td><td>2025/10/18</td></tr>
+        <tr><td>埼玉県</td><td class="num">1,141</td><td>2025/11/01</td></tr>
+        <tr><td>千葉県</td><td class="num">1,140</td><td>2025/10/03</td></tr>
+        <tr><td>神奈川県</td><td class="num">1,225</td><td>2025/10/04</td></tr>
+        <tr><td>沖縄県</td><td class="num">1,023</td><td>2025/12/01</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>全47都道府県の最低賃金が格納されており、最低額は1,023円（沖縄県・高知県・宮崎県）、最高額は1,226円（東京都）です。</p>
+</div>
+
+<!-- ========== SECTION 7: VBAマクロ構成 ========== -->
+<div class="section" id="sec7">
+  <div class="section-header">
+    <h2>VBAマクロ構成</h2>
+    <p>モジュール一覧と各モジュールの推定機能</p>
+  </div>
+
+  <p>本ツールには6つのVBAモジュール（2つの標準モジュール + 4つのドキュメントモジュール）が含まれています。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>モジュール名</th><th>種類</th><th>サイズ</th><th>推定機能</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Module1</strong></td>
+          <td>標準モジュール</td>
+          <td class="num">10,333 bytes</td>
+          <td>データインポート処理（exp / エラーファイルの読み込み）、データ出力処理</td>
+        </tr>
+        <tr>
+          <td><strong>Module2</strong></td>
+          <td>標準モジュール</td>
+          <td class="num">10,378 bytes</td>
+          <td>エラー修正のメインロジック（住所修正、最賃チェック、文字数修正など）</td>
+        </tr>
+        <tr>
+          <td><strong>ThisWorkbook</strong></td>
+          <td>ドキュメント</td>
+          <td class="num">1,188 bytes</td>
+          <td>ブックレベルのイベント処理（起動時初期化等）</td>
+        </tr>
+        <tr>
+          <td><strong>Sheet1</strong></td>
+          <td>ドキュメント</td>
+          <td class="num">1,180 bytes</td>
+          <td>mainシートのイベント処理</td>
+        </tr>
+        <tr>
+          <td><strong>Sheet2</strong></td>
+          <td>ドキュメント</td>
+          <td class="num">1,180 bytes</td>
+          <td>エラーシートのイベント処理</td>
+        </tr>
+        <tr>
+          <td><strong>Sheet4</strong></td>
+          <td>ドキュメント</td>
+          <td class="num">1,180 bytes</td>
+          <td>最賃シートのイベント処理</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Module1 推定処理内容（インポート/出力処理）</h3>
+
+  <p>VBAバイナリから抽出された文字列断片を分析した結果、Module1は以下の処理を行っていると推定されます。</p>
+
+  <div class="card">
+    <div class="card-title">expインポート処理</div>
+    <p>FileDialogを使用して外部Excelファイル（*.xlsx / *.xlsm）の選択ダイアログを表示し、選択されたファイルの内容をexpシートにコピーする処理。既存データがある場合は削除（Application.DisplayAlerts = False を使用してSheet.Deleteを実行）してから再読み込みを行う。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">エラーインポート処理</div>
+    <p>同様にFileDialogでエラーファイルを選択し、エラーシートにデータをコピーする。GetOpenFilenameメソッドでフィルタに "Microsoft Excel ,*" を指定。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">出力処理</div>
+    <p>修正済みのエラーデータを新規ブックとしてSaveAs（xlNormal形式）で出力する。保存先はmainシートのK13に設定されたパスにタイムスタンプ（yyyymmddhhmm形式）を付加したフォルダに保存。出力完了後にMsgBoxで通知。</p>
+  </div>
+
+  <h3>Module2 推定処理内容（エラー修正ロジック）</h3>
+
+  <p>Module2はエラー修正のコアロジックを担当し、エラーシートの各行をループしてエラー種別に応じた修正を適用します。</p>
+
+  <div class="card">
+    <div class="card-title">住所・郵便番号エラー修正</div>
+    <p>IR列（エラーメッセージ列）にInStr関数で「住所と郵便番号が一致しません」を検出した場合、expシートから該当求人案件IDの正しい住所情報を取得して上書き。紹介先企業の住所情報（IM～IN列）も同様に処理。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">最低賃金チェックと修正</div>
+    <p>「給与金額（最低）は最低賃金未満」エラーを検出した場合、エラーシートの都道府県情報（L列）から最賃シートの該当都道府県の最低賃金を参照し、AZ列（給与金額（最低））を最低賃金額に更新。エラー対象セルにRGB(255, 0, 0)で赤色フォントを設定して視覚的にハイライト。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">文字数超過エラー修正</div>
+    <p>「500文字以内で入力してください」エラーを検出した場合、該当カラム（EE列: 待遇・福利厚生補足コメント等）のテキストをトリミングまたはexpシートから正しいデータを再取得して上書き。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">エラー行の赤色ハイライト</div>
+    <p>修正できなかったエラー項目に対してはフォントカラーをRGB(255, 0, 0)（赤）に設定し、手動確認が必要であることを視覚的に示す。GoTo NextIteration による行単位のループ制御で全エラー行を処理。</p>
+  </div>
+</div>
+
+<!-- ========== SECTION 8: 処理フロー詳細 ========== -->
+<div class="section" id="sec8">
+  <div class="section-header">
+    <h2>処理フロー詳細</h2>
+    <p>ツール全体の処理の流れ</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-content">
+        <div class="step-title">[expインポート] ボタン押下</div>
+        <div class="step-desc">ファイル選択ダイアログを表示し、ジョブオプからエクスポートされた求人一覧ファイル（Excel形式）を選択。選択されたファイルの全データを「exp」シートにコピーする。既存データがある場合は事前に削除される。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-content">
+        <div class="step-title">[エラーインポート] ボタン押下</div>
+        <div class="step-desc">ファイル選択ダイアログを表示し、ジョブオプから出力されたエラーファイル（Excel形式）を選択。エラーデータを「エラー」シートにコピーする。エラーファイルにはIR列にエラーメッセージが含まれている。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-content">
+        <div class="step-title">[開始] ボタン押下 &mdash; エラー修正処理の実行</div>
+        <div class="step-desc">エラーシートの全データ行（3行目～最終行）をループし、以下のエラー種別ごとに自動修正を適用する。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3a</div>
+      <div class="flow-content">
+        <div class="step-title">住所・郵便番号不一致エラーの修正</div>
+        <div class="step-desc">IR列に「住所と郵便番号が一致しません」を含む行を検出。expシートから該当する求人案件ID（D列）でデータを検索し、正しい住所情報（K列: 郵便番号、L列: 都道府県市区町村）をエラーシートに上書き。紹介先企業情報（IM～IN列）についても同様に処理する。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3b</div>
+      <div class="flow-content">
+        <div class="step-title">最低賃金未満エラーの修正</div>
+        <div class="step-desc">IR列に「給与金額（最低）は最低賃金未満」を含む行を検出。エラー行の都道府県情報（L列）を元に「最賃」シートから該当都道府県の最低賃金を取得し、AZ列（給与金額（最低））を最低賃金額で上書き。修正セルに赤色フォント（RGB 255,0,0）を適用。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3c</div>
+      <div class="flow-content">
+        <div class="step-title">文字数超過エラーの修正</div>
+        <div class="step-desc">IR列に「500文字以内で入力してください」を含む行を検出。対象カラム（EE列: 待遇・福利厚生補足コメント等）のテキストを500文字以内にトリミングするか、expシートから正しいデータを再取得して上書き。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3d</div>
+      <div class="flow-content">
+        <div class="step-title">未対応エラーのハイライト</div>
+        <div class="step-desc">自動修正の対象外となるエラーが含まれている行については、該当セルにRGB(255, 0, 0)の赤色フォントを適用して、手動確認が必要であることを視覚的に示す。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-content">
+        <div class="step-title">[出力] ボタン押下</div>
+        <div class="step-desc">修正済みエラーデータを新規Excelブックとして指定パスに保存（xlNormal形式）。保存先は「G:\共有ドライブ\...\error\」配下にタイムスタンプ付きフォルダを作成。処理完了後にMsgBoxで「保存しました。」と通知。</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>データフロー図</h3>
+  <div class="card highlight">
+    <div class="card-title">入力 → 処理 → 出力の関係</div>
+<div class="code-block"><span class="cmt">[外部入力1]</span> ジョブオプ 求人一覧エクスポート  ──→  <span class="fn">expシート</span> (マスタ/参照用)
+                                                          │
+<span class="cmt">[外部入力2]</span> ジョブオプ エラーファイル        ──→  <span class="fn">エラーシート</span> (修正対象)
+                                                          │
+                                              ┌───────────┤
+                                              │           │
+                                        <span class="fn">最賃シート</span>    <span class="fn">expシート</span>
+                                        (最低賃金参照)  (正しいデータ参照)
+                                              │           │
+                                              └───────┬───┘
+                                                        │
+                                                  <span class="kw">VBA修正処理</span>
+                                                        │
+                                                        ▼
+                                              <span class="str">[出力]</span> 修正済みExcelファイル
+                                              保存先: G:\共有ドライブ\...\error\</div>
+  </div>
+</div>
+
+<!-- ========== SECTION 9: 主要関数一覧 ========== -->
+<div class="section" id="sec9">
+  <div class="section-header">
+    <h2>主要関数一覧</h2>
+    <p>VBAバイナリから抽出されたSub/Function</p>
+  </div>
+
+  <p>MS-OVBA圧縮のため完全なソースコードは得られませんが、バイナリ解析から以下の関数構成が推定されます。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>推定関数名</th><th>所在</th><th>推定処理内容</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>expインポート</strong></td>
+          <td>Module1</td>
+          <td>FileDialogでExpファイルを選択し、expシートにコピー。既存シートデータの削除、Application.DisplayAlerts制御を含む</td>
+        </tr>
+        <tr>
+          <td><strong>エラーインポート</strong></td>
+          <td>Module1</td>
+          <td>FileDialogでエラーファイルを選択し、エラーシートにコピー。GetOpenFilenameによるファイル選択処理</td>
+        </tr>
+        <tr>
+          <td><strong>開始（エラー修正メイン）</strong></td>
+          <td>Module2</td>
+          <td>エラーシートの全行ループ、InStrによるエラー種別判定、各修正サブルーチンの呼び出し、GoTo NextIterationによるループ制御</td>
+        </tr>
+        <tr>
+          <td><strong>出力</strong></td>
+          <td>Module1</td>
+          <td>修正データを新規ブックにCopy、SaveAs（xlNormal）で保存、タイムスタンプフォルダ作成（MkDir）、MsgBoxで完了通知</td>
+        </tr>
+        <tr>
+          <td><strong>住所修正サブルーチン</strong></td>
+          <td>Module2</td>
+          <td>expシートからの住所情報取得と上書き。紹介先企業の住所修正も含む</td>
+        </tr>
+        <tr>
+          <td><strong>最賃チェックサブルーチン</strong></td>
+          <td>Module2</td>
+          <td>最賃シートからの最低賃金取得、AZ列への上書き、赤色フォント適用</td>
+        </tr>
+        <tr>
+          <td><strong>文字数修正サブルーチン</strong></td>
+          <td>Module2</td>
+          <td>文字数超過項目のトリミングまたはexpシートからのデータ再取得</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>使用されている主なVBAキーワード・オブジェクト</h3>
+  <div class="tag-list">
+    <span class="tag">Application.DisplayAlerts</span>
+    <span class="tag">Application.ScreenUpdating</span>
+    <span class="tag">FileDialog / GetOpenFilename</span>
+    <span class="tag">Sheets().Cells()</span>
+    <span class="tag">Rows.Count / xlUp</span>
+    <span class="tag">InStr()</span>
+    <span class="tag">MsgBox</span>
+    <span class="tag">SaveAs (xlNormal)</span>
+    <span class="tag">MkDir</span>
+    <span class="tag">Dir()</span>
+    <span class="tag">RGB()</span>
+    <span class="tag">Interior.Color / Font.Color</span>
+    <span class="tag">Copy / Delete</span>
+    <span class="tag">GoTo NextIteration</span>
+    <span class="tag">On Error GoTo</span>
+    <span class="tag">WrapText</span>
+    <span class="tag">Format(Now, "yyyymmddhhmm")</span>
+    <span class="tag">ActiveWorkbook / ActiveSheet</span>
+    <span class="tag">NewBook / Workbooks.Add</span>
+    <span class="tag">For Each / Next</span>
+    <span class="tag">Exit Sub / Exit For</span>
+  </div>
+</div>
+
+<!-- ========== SECTION 10: 補足 ========== -->
+<div class="section" id="sec10">
+  <div class="section-header">
+    <h2>補足情報</h2>
+    <p>セキュリティ、外部依存、運用上の注意点</p>
+  </div>
+
+  <h3>シート保護状態</h3>
+  <p>全4シートともシート保護は設定されていません（Protection: False）。</p>
+
+  <h3>名前付き範囲</h3>
+  <p>名前付き範囲は定義されていません（Named Ranges: 0）。</p>
+
+  <h3>外部ファイル依存</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>対象</th><th>パス / 説明</th></tr></thead>
+      <tbody>
+        <tr><td>入力ファイル1</td><td>ジョブオプ求人一覧エクスポートファイル（.xlsx）&mdash; FileDialogで選択</td></tr>
+        <tr><td>入力ファイル2</td><td>ジョブオプエラーファイル（.xlsx）&mdash; FileDialogで選択</td></tr>
+        <tr><td>出力先</td><td>G:\共有ドライブ\00_全社共通\13_個人・部門別\02_内勤チーム\9.原稿更新ツール関連★\毎日_ホットスタッフ_ジョブオプ\error\</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>VBAプロジェクトのセキュリティ</h3>
+  <div class="card">
+    <div class="card-title">プロジェクト保護</div>
+    <p>VBAプロジェクトにはパスワード保護（DPB設定）が適用されています。ソースコードの直接閲覧にはパスワードの入力が必要です。</p>
+    <p>プロジェクト名: <strong>VBAProject</strong></p>
+    <p>VBA互換バージョン: <strong>32ビット互換（VersionCompatible32）</strong></p>
+    <p>参照ライブラリ: OLE Automation (stdole2.tlb)、Microsoft Office 16.0 Object Library (MSO.DLL)、VBE7.DLL、EXCEL.EXE</p>
+  </div>
+
+  <h3>エラー種別コード体系</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>エラーパターン</th><th>IR列のメッセージ例</th><th>自動修正</th></tr></thead>
+      <tbody>
+        <tr><td>住所・郵便番号不一致</td><td>住所と郵便番号が一致しません、住所は次の内容から選んでください。「...」</td><td>対応（expシートから正しい住所を取得）</td></tr>
+        <tr><td>最低賃金未満</td><td>(給与金額（最低）)は最低賃金未満</td><td>対応（最賃シートから最低賃金を取得して更新）</td></tr>
+        <tr><td>文字数超過</td><td>(待遇・福利厚生補足コメント)は500文字以内で入力してください</td><td>対応（トリミングまたはexpシートから再取得）</td></tr>
+        <tr><td>郵便番号不在</td><td>(郵便番号)は存在しません</td><td>対応（expシートから正しい郵便番号を取得）</td></tr>
+        <tr><td>紹介先住所不一致</td><td>紹介先企業の住所と郵便番号が一致しません</td><td>対応（expシートの紹介先企業情報から取得）</td></tr>
+        <tr><td>その他</td><td>上記以外のエラーメッセージ</td><td>非対応（赤色ハイライトで手動確認を促す）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>運用上の注意点</h3>
+  <ul>
+    <li>expシートのデータ量が16,000行超と大きいため、インポート時に処理時間がかかる場合があります。</li>
+    <li>出力先パス（G:\共有ドライブ\...）は Google Drive の共有ドライブを前提としています。アクセス権限がない場合は保存に失敗します。</li>
+    <li>最低賃金データ（最賃シート）は手動更新が必要です。ver1.03で最賃データが更新されています。</li>
+    <li>VBAプロジェクトはパスワード保護されているため、マクロの修正には管理者のパスワードが必要です。</li>
+  </ul>
+</div>
+
+</div><!-- /.container -->
+
+<div class="page-footer">
+  Excel Tool Analyzer Report &mdash; Generated 2026-02-07
+</div>
+
+</body>
+</html>

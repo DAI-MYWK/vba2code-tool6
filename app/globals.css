@@ -1,0 +1,327 @@
+/* ===========================
+   グローバルスタイル
+   カラーパレット: 白ベース + 青アクセント
+   =========================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f8fafd;
+  --color-bg-hover: #edf3fc;
+  --color-primary: #2a5ea8;
+  --color-primary-dark: #1a3a6e;
+  --color-primary-light: #5a8dc8;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #5a7ba5;
+  --color-border: #d4e0f0;
+  --color-success: #1a7a4c;
+  --color-error: #c53030;
+  --color-warning: #b87333;
+}
+
+html,
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.75;
+  min-height: 100vh;
+}
+
+/* ヘッダー */
+.page-header {
+  background: linear-gradient(135deg, #0a1628 0%, #1a3a6e 100%);
+  color: #ffffff;
+  padding: 32px 48px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.page-header .subtitle {
+  font-size: 14px;
+  color: #94b8e8;
+  font-weight: 400;
+}
+
+/* コンテナ */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* カード */
+.card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 16px;
+}
+
+/* ファイルアップロードエリア */
+.upload-area {
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--color-bg);
+}
+
+.upload-area:hover {
+  border-color: var(--color-primary);
+  background: var(--color-bg-hover);
+}
+
+.upload-area.active {
+  border-color: var(--color-primary);
+  background: var(--color-bg-hover);
+}
+
+.upload-area.has-file {
+  border-color: var(--color-success);
+  background: #f0faf5;
+}
+
+.upload-area input[type="file"] {
+  display: none;
+}
+
+.upload-label {
+  display: block;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.upload-label strong {
+  color: var(--color-primary);
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-success);
+  margin-top: 8px;
+}
+
+/* ボタン */
+.button {
+  display: inline-block;
+  padding: 12px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button-primary {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.button-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.button-primary:disabled {
+  background: #a0b8d8;
+  cursor: not-allowed;
+}
+
+.button-secondary {
+  background: var(--color-bg);
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.button-secondary:hover {
+  background: var(--color-bg-hover);
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* 結果エリア */
+.result-area {
+  margin-top: 32px;
+}
+
+.result-summary {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-label {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.result-value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.result-value.success {
+  color: var(--color-success);
+}
+
+.result-value.error {
+  color: var(--color-error);
+}
+
+/* ステップ表示 */
+.steps {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  position: relative;
+}
+
+.step.active {
+  border-color: var(--color-primary);
+  background: var(--color-bg-hover);
+}
+
+.step.completed {
+  border-color: var(--color-success);
+  background: #f0faf5;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.step.active .step-number {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.step.completed .step-number {
+  background: var(--color-success);
+  color: #ffffff;
+}
+
+.step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* プログレスバー */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+/* メッセージ */
+.message {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+.message-success {
+  background: #f0faf5;
+  border: 1px solid #1a7a4c;
+  color: #1a7a4c;
+}
+
+.message-error {
+  background: #fef2f2;
+  border: 1px solid #c53030;
+  color: #c53030;
+}
+
+/* フッター */
+.page-footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ローディング */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,131 @@
+Sub expインポート()
+
+    Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim OpenFileName As String
+    
+    '「exp」というシートがあれば削除
+    For Each ws In Worksheets
+      If ws.Name = "exp" Then
+        Application.DisplayAlerts = False
+        ws.Delete
+        Application.DisplayAlerts = True
+      End If
+    Next ws
+    
+    'ダイアログを開きファイルを選択して、このブックに「求人情報」という名前でシート追加する。
+On Error GoTo label01
+    OpenFileName = Application.GetOpenFilename("Microsoft Excelブック,*")
+    Workbooks.Open OpenFileName
+    Set wb = ActiveWorkbook
+    wb.Sheets(1).Copy After:=ThisWorkbook.Sheets(1)
+    ActiveSheet.Name = "exp"
+    wb.Close
+    MsgBox "expデータをコピーしました。"
+    
+Exit Sub
+
+label01:
+    MsgBox "処理をキャンセルしました。"
+End Sub
+
+Sub エラーインポート()
+
+    Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim OpenFileName As String
+    
+    '「エラー」というシートがあれば削除
+    For Each ws In Worksheets
+      If ws.Name = "エラー" Then
+        Application.DisplayAlerts = False
+        ws.Delete
+        Application.DisplayAlerts = True
+      End If
+    Next ws
+    
+    'ダイアログを開きファイルを選択して、このブックに「求人情報」という名前でシート追加する。
+On Error GoTo label01
+    OpenFileName = Application.GetOpenFilename("Microsoft Excelブック,*")
+    Workbooks.Open OpenFileName
+    Set wb = ActiveWorkbook
+    wb.Sheets(1).Copy After:=ThisWorkbook.Sheets(1)
+    ActiveSheet.Name = "エラー"
+    wb.Close
+    MsgBox "エラーデータをコピーしました。"
+    
+Exit Sub
+
+label01:
+    MsgBox "処理をキャンセルしました。"
+End Sub
+
+
+Sub タブ出力() '更新タブ
+
+    'コピーするシートを指定
+    Dim CopyWs As Worksheet
+    Set CopyWs = Worksheets("エラー")
+    
+    '新規ブックを作成
+    Dim NewBook As Workbook
+    Set NewBook = Workbooks.Add
+    
+    '新規ブックの一番後ろにコピー
+    CopyWs.Copy After:=NewBook.Worksheets(NewBook.Worksheets.Count)
+    
+    
+    'テンプレート以外の不要なシートを全て削除
+    Application.DisplayAlerts = False
+    
+    Dim NewBookWs As Worksheet
+    For Each NewBookWs In NewBook.Worksheets
+        
+        'シート名が新規ではなかった場合、シートを削除
+        If NewBookWs.Name <> CopyWs.Name Then
+            NewBookWs.Delete
+        End If
+        
+    Next NewBookWs
+    
+    Application.DisplayAlerts = True
+
+    'リソース初期化
+    Set CopyWs = Nothing
+    Set NewBook = Nothing
+    Set NewBookWs = Nothing
+    
+    Call データ保存
+    
+    
+    
+    
+End Sub
+
+Sub データ保存()
+Dim fileName As String, folderPath As String
+
+
+    ' ファイル名とフォルダパスを指定する
+    fileName = "error_" & Format(Now, "yyyymmddhhmmss")  ' 保存するファイル名を指定する
+    folderPath = ThisWorkbook.Sheets("main").Cells(13, 11) ' 保存先フォルダを指定する
+    
+    ' フォルダが存在しない場合は作成する
+    If Dir(folderPath, vbDirectory) = "" Then
+        MkDir folderPath
+    End If
+            
+    ' ファイルを保存する
+    ActiveWorkbook.SaveAs folderPath & fileName, FileFormat:=xlNormal
+    
+    'ファイルを一旦閉じて、再び開き折り返し表示を解除（なぜか求人ボックスにアップロードできないので仕方なく）
+    ActiveWorkbook.Close
+    Workbooks.Open folderPath & fileName
+    ActiveSheet.Cells.WrapText = False
+    
+    ActiveSheet.Name = "DATA"
+    
+    MsgBox "保存しました。" & vbLf & folderPath
+    
+
+End Sub
